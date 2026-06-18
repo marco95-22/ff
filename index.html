@@ -95,13 +95,13 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
 .einsatz-field label {
   font-size: 11px; color: #888; margin-bottom: 3px;
 }
-.einsatz-field input, .einsatz-field textarea {
+.einsatz-field input, .einsatz-field textarea, .einsatz-field select {
   padding: 8px 10px;
   border: 1px solid #ddd; border-radius: 8px;
   font-size: 15px; background: #f5f5f5; color: #1a1a1a;
   -webkit-appearance: none; font-family: -apple-system, sans-serif;
 }
-.einsatz-field input:focus, .einsatz-field textarea:focus {
+.einsatz-field input:focus, .einsatz-field textarea:focus, .einsatz-field select:focus {
   outline: none; border-color: #1a9e5a; background: #fff;
 }
 .einsatz-field textarea {
@@ -156,6 +156,26 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
 
 <div class="einsatz">
   <div class="einsatz-title">Einsatz / Übung</div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="art">Art</label>
+      <select id="art" oninput="saveEinsatz()">
+        <option value="">– bitte wählen –</option>
+        <option>Gruppenübung</option>
+        <option>Hauptübung</option>
+        <option>Ausschusssitzung</option>
+        <option>Gemeinschaftsübung</option>
+        <option>JHV</option>
+        <option>Einsatz</option>
+        <option>Arbeitseinsatz</option>
+        <option>Schulung</option>
+        <option>Florianifeier</option>
+        <option>Kirchgang</option>
+        <option>Kommandobe­sprechung</option>
+        <option>Sonst. Tätigkeiten</option>
+      </select>
+    </div>
+  </div>
   <div class="einsatz-row">
     <div class="einsatz-field">
       <label for="datum">Datum</label>
@@ -299,6 +319,7 @@ function saveState() {
 
 function saveEinsatz() {
   var e = {
+    art: document.getElementById('art').value,
     datum: document.getElementById('datum').value,
     von: document.getElementById('von').value,
     bis: document.getElementById('bis').value,
@@ -313,6 +334,7 @@ function loadEinsatz() {
     var saved = localStorage.getItem('ff_einsatz');
     if (!saved) return;
     var e = JSON.parse(saved);
+    if (e.art) document.getElementById('art').value = e.art;
     if (e.datum) document.getElementById('datum').value = e.datum;
     if (e.von) document.getElementById('von').value = e.von;
     if (e.bis) document.getElementById('bis').value = e.bis;
@@ -359,12 +381,14 @@ function exportNummern() {
   for (var i = 0; i < members.length; i++) {
     if (present[String(members[i].nr)]) nrs.push(members[i].nr);
   }
+  var art = document.getElementById('art').value;
   var datum = document.getElementById('datum').value;
   var von = document.getElementById('von').value;
   var bis = document.getElementById('bis').value;
   var ort = document.getElementById('ort').value;
   var notizen = document.getElementById('notizen').value;
   var lines = [];
+  if (art) lines.push('Art: ' + art);
   if (datum) lines.push('Datum: ' + datum);
   if (von || bis) lines.push('Zeit: ' + (von || '–') + ' – ' + (bis || '–'));
   if (ort) lines.push('Ort: ' + ort);
@@ -403,6 +427,7 @@ function copyOutput() {
 function resetAll() {
   present = {};
   saveState();
+  document.getElementById('art').value = '';
   document.getElementById('datum').value = '';
   document.getElementById('von').value = '';
   document.getElementById('bis').value = '';
