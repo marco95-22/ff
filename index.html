@@ -6,82 +6,87 @@
 <title>FF Anwesenheit</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a1a; }
 
 .header {
   position: sticky; top: 0; z-index: 10;
-  background: #fff;
+  background: #f0f0f0;
   padding: 12px 16px 10px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #dcdcdc;
 }
 .stats {
   display: flex; gap: 8px; margin-bottom: 10px;
 }
 .stat {
-  flex: 1; background: #f5f5f5; border-radius: 10px;
+  flex: 1; background: #e0e0e0; border-radius: 10px;
   padding: 8px 10px; text-align: center;
 }
 .stat-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
-.stat-num.green { color: #1a9e5a; }
-.stat-label { font-size: 11px; color: #888; margin-top: 1px; }
+.stat-num.red { color: #d32f2f; }
+.stat-label { font-size: 11px; color: #666; margin-top: 1px; }
 
 #search {
   width: 100%; padding: 9px 14px;
-  border: 1px solid #ddd; border-radius: 10px;
-  font-size: 16px; background: #f5f5f5; color: #1a1a1a;
+  border: 1px solid #ccc; border-radius: 10px;
+  font-size: 16px; background: #fafafa; color: #1a1a1a;
   -webkit-appearance: none;
 }
-#search:focus { outline: none; border-color: #1a9e5a; background: #fff; }
+#search:focus { outline: none; border-color: #d32f2f; background: #fff; }
 
 .list { padding-bottom: 160px; }
 
 .person {
   display: flex; align-items: center; gap: 14px;
   padding: 13px 16px;
-  background: #fff;
-  border-bottom: 1px solid #ececec;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
   cursor: pointer;
   -webkit-user-select: none; user-select: none;
 }
-.person:active { background: #f0f0f0; }
-.person.anwesend { background: #edfaf3; }
-.person.anwesend:active { background: #d0f0e0; }
+.person:active { background: #e8e8e8; }
+.person.anwesend { background: #fdf2f2; }
+.person.anwesend:active { background: #f9d5d5; }
 
 .check {
   width: 28px; height: 28px; flex-shrink: 0;
   border-radius: 50%;
-  border: 2px solid #ccc;
+  border: 2px solid #bbb;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s, border-color 0.15s;
 }
 .person.anwesend .check {
-  background: #1a9e5a; border-color: #1a9e5a;
+  background: #d32f2f; border-color: #d32f2f;
 }
 .check svg { display: none; }
 .person.anwesend .check svg { display: block; }
 
 .info { flex: 1; min-width: 0; }
-.name { font-size: 15px; color: #1a1a1a; }
-.person.anwesend .name { font-weight: 600; color: #0d6e3a; }
+.name { font-size: 15px; color: #222; }
+.person.anwesend .name { font-weight: 600; color: #a82323; }
 
 .nr {
-  font-size: 13px; color: #999;
-  background: #f0f0f0; border-radius: 6px;
+  font-size: 13px; color: #777;
+  background: #e8e8e8; border-radius: 6px;
   padding: 2px 8px; flex-shrink: 0;
 }
 .person.anwesend .nr {
-  background: #c8edd9; color: #0d6e3a;
+  background: #f9d5d5; color: #a82323;
 }
 
-.no-results { padding: 2rem; text-align: center; color: #999; font-size: 14px; }
+.no-results { padding: 2rem; text-align: center; color: #777; font-size: 14px; }
 
 .einsatz {
-  background: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  border-bottom: 1px solid #dcdcdc;
   padding: 12px 16px;
+  transition: max-height 0.25s ease-out, opacity 0.25s ease-out, padding 0.25s ease-out;
+  max-height: 500px; opacity: 1; overflow: hidden;
+}
+.einsatz.hidden {
+  max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; border-bottom: none;
 }
 .einsatz-title {
-  font-size: 11px; font-weight: 600; color: #888;
+  font-size: 11px; font-weight: 600; color: #666;
   text-transform: uppercase; letter-spacing: 0.05em;
   margin-bottom: 10px;
 }
@@ -93,16 +98,16 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
   display: flex; flex-direction: column; flex: 1;
 }
 .einsatz-field label {
-  font-size: 11px; color: #888; margin-bottom: 3px;
+  font-size: 11px; color: #666; margin-bottom: 3px;
 }
 .einsatz-field input, .einsatz-field textarea, .einsatz-field select {
   padding: 8px 10px;
-  border: 1px solid #ddd; border-radius: 8px;
-  font-size: 15px; background: #f5f5f5; color: #1a1a1a;
+  border: 1px solid #ccc; border-radius: 8px;
+  font-size: 15px; background: #fafafa; color: #1a1a1a;
   -webkit-appearance: none; font-family: -apple-system, sans-serif;
 }
 .einsatz-field input:focus, .einsatz-field textarea:focus, .einsatz-field select:focus {
-  outline: none; border-color: #1a9e5a; background: #fff;
+  outline: none; border-color: #d32f2f; background: #fff;
 }
 .einsatz-field textarea {
   resize: none; height: 60px; line-height: 1.4;
@@ -110,32 +115,32 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
 
 .footer {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: #fff; border-top: 1px solid #e0e0e0;
+  background: #f0f0f0; border-top: 1px solid #dcdcdc;
   padding: 10px 16px 20px;
 }
 .output-box {
-  background: #f5f5f5; border: 1px solid #ddd; border-radius: 10px;
+  background: #e8e8e8; border: 1px solid #ccc; border-radius: 10px;
   padding: 10px 12px; font-family: monospace; font-size: 13px;
   color: #1a1a1a; word-break: break-all;
   margin-bottom: 8px; display: none; cursor: pointer;
 }
-.copy-hint { font-size: 11px; color: #888; margin-bottom: 6px; display: none; }
+.copy-hint { font-size: 11px; color: #666; margin-bottom: 6px; display: none; }
 .export-btn {
   width: 100%; padding: 13px;
-  background: #1a9e5a; color: #fff;
+  background: #d32f2f; color: #fff;
   border: none; border-radius: 12px;
   font-size: 16px; font-weight: 600; cursor: pointer;
   -webkit-appearance: none;
 }
-.export-btn:active { background: #0d6e3a; }
+.export-btn:active { background: #a82323; }
 .export-btn:disabled { background: #ccc; color: #fff; }
 .reset-btn {
   width: 100%; padding: 9px; margin-top: 6px;
-  background: none; border: 1px solid #ddd; border-radius: 10px;
-  font-size: 13px; color: #888; cursor: pointer;
+  background: none; border: 1px solid #ccc; border-radius: 10px;
+  font-size: 13px; color: #666; cursor: pointer;
   -webkit-appearance: none;
 }
-.reset-btn:active { background: #f0f0f0; }
+.reset-btn:active { background: #e0e0e0; }
 </style>
 </head>
 <body>
@@ -147,14 +152,14 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
       <div class="stat-label">Mitglieder</div>
     </div>
     <div class="stat">
-      <div class="stat-num green" id="present-count">0</div>
+      <div class="stat-num red" id="present-count">0</div>
       <div class="stat-label">Anwesend</div>
     </div>
   </div>
   <input type="search" id="search" placeholder="Name oder Nummer suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 </div>
 
-<div class="einsatz">
+<div class="einsatz" id="einsatz-form">
   <div class="einsatz-title">Einsatz / Übung</div>
   <div class="einsatz-row">
     <div class="einsatz-field">
@@ -305,13 +310,15 @@ members.sort(function(a,b){
   return 0;
 });
 
+for (var i = 0; i < members.length; i++) {
+  members[i]._searchKey = (members[i].nachname + ' ' + members[i].vorname + ' ' + members[i].nr).toLowerCase();
+}
+
 var present = {};
 try {
   var saved = localStorage.getItem('ff_anwesenheit');
   if (saved) present = JSON.parse(saved);
 } catch(e) {}
-
-var filtered = members.slice();
 
 function saveState() {
   try { localStorage.setItem('ff_anwesenheit', JSON.stringify(present)); } catch(e) {}
@@ -343,18 +350,14 @@ function loadEinsatz() {
   } catch(e) {}
 }
 
-function render() {
+function initialRender() {
   var list = document.getElementById('list');
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="no-results">Keine Ergebnisse</div>';
-    return;
-  }
   var html = '';
-  for (var i = 0; i < filtered.length; i++) {
-    var m = filtered[i];
+  for (var i = 0; i < members.length; i++) {
+    var m = members[i];
     var key = String(m.nr);
     var isP = present[key] === true;
-    html += '<div class="person' + (isP ? ' anwesend' : '') + '" onclick="toggle(\'' + key + '\')">';
+    html += '<div class="person' + (isP ? ' anwesend' : '') + '" id="p-' + key + '" onclick="toggle(\'' + key + '\')">';
     html += '<div class="check">';
     html += '<svg width="14" height="11" viewBox="0 0 14 11" fill="none"><polyline points="1,5.5 5,9.5 13,1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     html += '</div>';
@@ -363,15 +366,31 @@ function render() {
     html += '</div>';
   }
   list.innerHTML = html;
+  updateStats();
+}
+
+function updateStats() {
   document.getElementById('total-count').textContent = members.length;
-  document.getElementById('present-count').textContent = Object.keys(present).length;
+  var countPresent = Object.keys(present).length;
+  document.getElementById('present-count').textContent = countPresent;
+  document.getElementById('export-btn').disabled = countPresent === 0;
 }
 
 function toggle(key) {
-  if (present[key]) { delete present[key]; } else { present[key] = true; }
+  var el = document.getElementById('p-' + key);
+  if (present[key]) {
+    delete present[key];
+    if (el) el.classList.remove('anwesend');
+  } else {
+    present[key] = true;
+    if (el) el.classList.add('anwesend');
+  }
+  
+  // Tastatur einklappen nach Auswahl
+  document.getElementById('search').blur();
+  
   saveState();
-  render();
-  document.getElementById('export-btn').disabled = Object.keys(present).length === 0;
+  updateStats();
   document.getElementById('output-box').style.display = 'none';
   document.getElementById('copy-hint').style.display = 'none';
 }
@@ -396,17 +415,14 @@ function exportNummern() {
   lines.push('Anwesend (' + nrs.length + '): ' + nrs.join(', '));
   var text = lines.join('\n');
 
-  // Prüfen, ob das Smartphone/der Browser die native Teilen-Funktion unterstützt
   if (navigator.share) {
     navigator.share({
       title: art || 'FF Anwesenheit',
       text: text
     }).catch(function(err) {
-      // Falls der User abbricht oder ein Fehler auftritt, Fallback nutzen
       showFallbackBox(text);
     });
   } else {
-    // Fallback für Browser, die das native Teilen nicht unterstützen
     showFallbackBox(text);
   }
 }
@@ -450,29 +466,52 @@ function resetAll() {
   document.getElementById('bis').value = '';
   document.getElementById('ort').value = '';
   document.getElementById('notizen').value = '';
-  try { localStorage.removeItem('ff_einsatz'); } catch(e) {}  document.getElementById('search').value = '';
-  filtered = members.slice();
-  document.getElementById('output-box').style.display = 'none';
-  document.getElementById('copy-hint').style.display = 'none';
-  document.getElementById('export-btn').disabled = true;
-  render();
-}
-
-document.getElementById('search').addEventListener('input', function(e) {
-  var q = e.target.value.toLowerCase();
-  if (!q) { filtered = members.slice(); }
-  else {
-    filtered = [];
-    for (var i = 0; i < members.length; i++) {
-      if ((members[i].nachname + ' ' + members[i].vorname).toLowerCase().indexOf(q) !== -1 || members[i].vorname.toLowerCase().indexOf(q) !== -1 || String(members[i].nr).indexOf(q) !== -1) {
-        filtered.push(members[i]);
-      }
+  try { localStorage.removeItem('ff_einsatz'); } catch(e) {}
+  document.getElementById('search').value = '';
+  
+  for (var i = 0; i < members.length; i++) {
+    var el = document.getElementById('p-' + members[i].nr);
+    if (el) {
+      el.style.display = '';
+      el.classList.remove('anwesend');
     }
   }
-  render();
+  
+  document.getElementById('einsatz-form').classList.remove('hidden');
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('copy-hint').style.display = 'none';
+  updateStats();
+}
+
+// Suche Event-Listeners mit automatischem Ein-/Ausblenden des Formulars
+var searchInput = document.getElementById('search');
+var einsatzForm = document.getElementById('einsatz-form');
+
+searchInput.addEventListener('input', function(e) {
+  var q = e.target.value.toLowerCase();
+  for (var i = 0; i < members.length; i++) {
+    var el = document.getElementById('p-' + members[i].nr);
+    if (!el) continue;
+    if (members[i]._searchKey.indexOf(q) !== -1) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
 });
 
-render();
+searchInput.addEventListener('focus', function() {
+  einsatzForm.classList.add('hidden');
+});
+
+searchInput.addEventListener('blur', function() {
+  // Nur wieder einblenden, wenn das Suchfeld leer ist
+  if (searchInput.value === '') {
+    einsatzForm.classList.remove('hidden');
+  }
+});
+
+initialRender();
 loadEinsatz();
 </script>
 </body>
