@@ -386,8 +386,21 @@ function toggle(key) {
     if (el) el.classList.add('anwesend');
   }
   
-  // Tastatur einklappen nach Auswahl
-  document.getElementById('search').blur();
+  // 1. Suchfeld leeren
+  var searchInput = document.getElementById('search');
+  searchInput.value = '';
+  
+  // 2. Alle Personen wieder einblenden (da die Suche zurückgesetzt wurde)
+  for (var i = 0; i < members.length; i++) {
+    var pEl = document.getElementById('p-' + members[i].nr);
+    if (pEl) pEl.style.display = '';
+  }
+  
+  // 3. Einsatz-Formular wieder einblenden
+  document.getElementById('einsatz-form').classList.remove('hidden');
+  
+  // 4. DIREKT WIEDER IN DIE SUCHE SPRINGEN & Tastatur offen halten
+  searchInput.focus();
   
   saveState();
   updateStats();
