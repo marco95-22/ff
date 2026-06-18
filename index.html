@@ -211,7 +211,7 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
 <div class="footer">
   <div class="output-box" id="output-box" onclick="copyOutput()"></div>
   <div class="copy-hint" id="copy-hint">Antippen zum Kopieren</div>
-  <button class="export-btn" id="export-btn" onclick="exportNummern()" disabled>Standesummern exportieren</button>
+  <button class="export-btn" id="export-btn" onclick="exportNummern()" disabled>Anwesenheit teilen</button>
   <button class="reset-btn" onclick="resetAll()">Auswahl zurücksetzen</button>
 </div>
 
@@ -395,6 +395,23 @@ function exportNummern() {
   if (notizen) lines.push('Notizen: ' + notizen);
   lines.push('Anwesend (' + nrs.length + '): ' + nrs.join(', '));
   var text = lines.join('\n');
+
+  // Prüfen, ob das Smartphone/der Browser die native Teilen-Funktion unterstützt
+  if (navigator.share) {
+    navigator.share({
+      title: art || 'FF Anwesenheit',
+      text: text
+    }).catch(function(err) {
+      // Falls der User abbricht oder ein Fehler auftritt, Fallback nutzen
+      showFallbackBox(text);
+    });
+  } else {
+    // Fallback für Browser, die das native Teilen nicht unterstützen
+    showFallbackBox(text);
+  }
+}
+
+function showFallbackBox(text) {
   var box = document.getElementById('output-box');
   box.textContent = text;
   box.style.display = 'block';
