@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FF Anwesenheit</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+
+.header {
+  position: sticky; top: 0; z-index: 10;
+  background: #fff;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.stats {
+  display: flex; gap: 8px; margin-bottom: 10px;
+}
+.stat {
+  flex: 1; background: #f5f5f5; border-radius: 10px;
+  padding: 8px 10px; text-align: center;
+}
+.stat-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+.stat-num.green { color: #1a9e5a; }
+.stat-label { font-size: 11px; color: #888; margin-top: 1px; }
+
+#search {
+  width: 100%; padding: 9px 14px;
+  border: 1px solid #ddd; border-radius: 10px;
+  font-size: 16px; background: #f5f5f5; color: #1a1a1a;
+  -webkit-appearance: none;
+}
+#search:focus { outline: none; border-color: #1a9e5a; background: #fff; }
+
+.list { padding-bottom: 160px; }
+
+.person {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+.person:active { background: #f0f0f0; }
+.person.anwesend { background: #edfaf3; }
+.person.anwesend:active { background: #d0f0e0; }
+
+.check {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.person.anwesend .check {
+  background: #1a9e5a; border-color: #1a9e5a;
+}
+.check svg { display: none; }
+.person.anwesend .check svg { display: block; }
+
+.info { flex: 1; min-width: 0; }
+.name { font-size: 15px; color: #1a1a1a; }
+.person.anwesend .name { font-weight: 600; color: #0d6e3a; }
+
+.nr {
+  font-size: 13px; color: #999;
+  background: #f0f0f0; border-radius: 6px;
+  padding: 2px 8px; flex-shrink: 0;
+}
+.person.anwesend .nr {
+  background: #c8edd9; color: #0d6e3a;
+}
+
+.no-results { padding: 2rem; text-align: center; color: #999; font-size: 14px; }
+
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid #e0e0e0;
+  padding: 10px 16px 20px;
+}
+.output-box {
+  background: #f5f5f5; border: 1px solid #ddd; border-radius: 10px;
+  padding: 10px 12px; font-family: monospace; font-size: 13px;
+  color: #1a1a1a; word-break: break-all;
+  margin-bottom: 8px; display: none; cursor: pointer;
+}
+.copy-hint { font-size: 11px; color: #888; margin-bottom: 6px; display: none; }
+.export-btn {
+  width: 100%; padding: 13px;
+  background: #1a9e5a; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+  -webkit-appearance: none;
+}
+.export-btn:active { background: #0d6e3a; }
+.export-btn:disabled { background: #ccc; color: #fff; }
+.reset-btn {
+  width: 100%; padding: 9px; margin-top: 6px;
+  background: none; border: 1px solid #ddd; border-radius: 10px;
+  font-size: 13px; color: #888; cursor: pointer;
+  -webkit-appearance: none;
+}
+.reset-btn:active { background: #f0f0f0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="total-count">0</div>
+      <div class="stat-label">Mitglieder</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num green" id="present-count">0</div>
+      <div class="stat-label">Anwesend</div>
+    </div>
+  </div>
+  <input type="search" id="search" placeholder="Name oder Nummer suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+</div>
+
+<div class="list" id="list"></div>
+
+<div class="footer">
+  <div class="output-box" id="output-box" onclick="copyOutput()"></div>
+  <div class="copy-hint" id="copy-hint">Antippen zum Kopieren</div>
+  <button class="export-btn" id="export-btn" onclick="exportNummern()" disabled>Standesummern exportieren</button>
+  <button class="reset-btn" onclick="resetAll()">Auswahl zurücksetzen</button>
+</div>
+
+<script>
+var members = [
+  {nr:200,name:"Norbert Amraser"},
+  {nr:257,name:"Christina Amraser"},
+  {nr:201,name:"Florian Baumgartner"},
+  {nr:202,name:"Peter Bergmann"},
+  {nr:290,name:"Herbert Boden"},
+  {nr:266,name:"Andreas Duregger"},
+  {nr:203,name:"Markus Duregger"},
+  {nr:296,name:"Michael Duregger"},
+  {nr:204,name:"Norbert Duregger"},
+  {nr:205,name:"Johann Frank"},
+  {nr:301,name:"Emanuel Gasser"},
+  {nr:206,name:"Josef Girstmair"},
+  {nr:274,name:"Kurt Gomig"},
+  {nr:305,name:"Gabriel Gradnig"},
+  {nr:207,name:"Josef Groder"},
+  {nr:300,name:"Nelly Hartinger"},
+  {nr:285,name:"Florian Huber"},
+  {nr:306,name:"Jonas Huber"},
+  {nr:210,name:"Johann Idl"},
+  {nr:211,name:"Josef Idl"},
+  {nr:212,name:"Klaus Idl"},
+  {nr:272,name:"Simon Idl"},
+  {nr:295,name:"Samuel Jeller"},
+  {nr:215,name:"Konrad Klaunzer"},
+  {nr:268,name:"Clemens Kollnig"},
+  {nr:245,name:"Franz Kollnig"},
+  {nr:218,name:"Franz Kollnig II"},
+  {nr:270,name:"Gerhard Kollnig"},
+  {nr:219,name:"Josef Kollnig"},
+  {nr:262,name:"Raimund Kollnig"},
+  {nr:199,name:"Gernot Ladner"},
+  {nr:293,name:"Stefan Mariner"},
+  {nr:269,name:"Marco Mayr"},
+  {nr:281,name:"Gerd Mitterdorfer"},
+  {nr:297,name:"Leo Monz-Bodner"},
+  {nr:277,name:"Alexander Neumair"},
+  {nr:221,name:"Alois Neumair"},
+  {nr:260,name:"Andre Neumair"},
+  {nr:222,name:"Josef Neumair"},
+  {nr:223,name:"Marko Neumair"},
+  {nr:225,name:"Martin Niedertscheider"},
+  {nr:298,name:"Julian Obererlacher"},
+  {nr:227,name:"Herbert Presslaber"},
+  {nr:267,name:"Lukas Presslaber"},
+  {nr:253,name:"Josef Ranacher"},
+  {nr:307,name:"Josef Ranacher II"},
+  {nr:299,name:"Peter Rieslegger"},
+  {nr:229,name:"Hermann Rossi"},
+  {nr:230,name:"Daniel Steiner"},
+  {nr:261,name:"Gerald Steiner"},
+  {nr:231,name:"Johannes Steiner"},
+  {nr:304,name:"Klemens Steiner"},
+  {nr:303,name:"Matthias Steiner"},
+  {nr:232,name:"Paul Steiner"},
+  {nr:233,name:"Michael Theurl"},
+  {nr:234,name:"Walter Theurl"},
+  {nr:302,name:"Fabian Tiefnig"},
+  {nr:235,name:"Josef Tiefnig"},
+  {nr:287,name:"Klaus Tiefnig"},
+  {nr:280,name:"Lukas Tiefnig"},
+  {nr:236,name:"Michael Tiefnig"},
+  {nr:275,name:"Daniel Trojer"},
+  {nr:294,name:"Andreas Tscharnig"},
+  {nr:238,name:"Engelbert Tscharnig"},
+  {nr:282,name:"Johannes Tscharnig"},
+  {nr:265,name:"Markus Tscharnig"},
+  {nr:284,name:"Dominic Vallazza"},
+  {nr:241,name:"Ludwig Vallazza"},
+  {nr:308,name:"Niklas Wallensteiner"},
+  {nr:283,name:"Martin Waschnig"},
+  {nr:243,name:"Bernhard Webhofer"},
+  {nr:288,name:"Fabian Webhofer"},
+  {nr:264,name:"Friedrich Webhofer"},
+  {nr:244,name:"Hermann Webhofer"},
+  {nr:276,name:"Michael Webhofer"},
+  {nr:278,name:"Stefan Webhofer"},
+  {nr:292,name:"Jurgen Weiler"},
+  {nr:289,name:"Bernd Wimmer"}
+];
+
+members.sort(function(a,b){ return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+
+var present = {};
+var filtered = members.slice();
+
+function render() {
+  var list = document.getElementById('list');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="no-results">Keine Ergebnisse</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var m = filtered[i];
+    var key = String(m.nr);
+    var isP = present[key] === true;
+    html += '<div class="person' + (isP ? ' anwesend' : '') + '" onclick="toggle(\'' + key + '\')">';
+    html += '<div class="check">';
+    html += '<svg width="14" height="11" viewBox="0 0 14 11" fill="none"><polyline points="1,5.5 5,9.5 13,1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    html += '</div>';
+    html += '<div class="info"><div class="name">' + m.name + '</div></div>';
+    html += '<div class="nr">' + m.nr + '</div>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  document.getElementById('total-count').textContent = members.length;
+  document.getElementById('present-count').textContent = Object.keys(present).length;
+}
+
+function toggle(key) {
+  if (present[key]) { delete present[key]; } else { present[key] = true; }
+  render();
+  document.getElementById('export-btn').disabled = Object.keys(present).length === 0;
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('copy-hint').style.display = 'none';
+}
+
+function exportNummern() {
+  var nrs = [];
+  for (var i = 0; i < members.length; i++) {
+    if (present[String(members[i].nr)]) nrs.push(members[i].nr);
+  }
+  var text = nrs.join(', ');
+  var box = document.getElementById('output-box');
+  box.textContent = text;
+  box.style.display = 'block';
+  document.getElementById('copy-hint').style.display = 'block';
+}
+
+function copyOutput() {
+  var text = document.getElementById('output-box').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      var box = document.getElementById('output-box');
+      var orig = box.textContent;
+      box.textContent = 'Kopiert!';
+      setTimeout(function(){ box.textContent = orig; }, 1500);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var box = document.getElementById('output-box');
+    var orig = box.textContent;
+    box.textContent = 'Kopiert!';
+    setTimeout(function(){ box.textContent = orig; }, 1500);
+  }
+}
+
+function resetAll() {
+  present = {};
+  document.getElementById('search').value = '';
+  filtered = members.slice();
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('copy-hint').style.display = 'none';
+  document.getElementById('export-btn').disabled = true;
+  render();
+}
+
+document.getElementById('search').addEventListener('input', function(e) {
+  var q = e.target.value.toLowerCase();
+  if (!q) { filtered = members.slice(); }
+  else {
+    filtered = [];
+    for (var i = 0; i < members.length; i++) {
+      if (members[i].name.toLowerCase().indexOf(q) !== -1 || String(members[i].nr).indexOf(q) !== -1) {
+        filtered.push(members[i]);
+      }
+    }
+  }
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
