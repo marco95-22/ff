@@ -75,6 +75,39 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
 
 .no-results { padding: 2rem; text-align: center; color: #999; font-size: 14px; }
 
+.einsatz {
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px;
+}
+.einsatz-title {
+  font-size: 11px; font-weight: 600; color: #888;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.einsatz-row {
+  display: flex; gap: 8px; margin-bottom: 8px;
+}
+.einsatz-row:last-child { margin-bottom: 0; }
+.einsatz-field {
+  display: flex; flex-direction: column; flex: 1;
+}
+.einsatz-field label {
+  font-size: 11px; color: #888; margin-bottom: 3px;
+}
+.einsatz-field input, .einsatz-field textarea {
+  padding: 8px 10px;
+  border: 1px solid #ddd; border-radius: 8px;
+  font-size: 15px; background: #f5f5f5; color: #1a1a1a;
+  -webkit-appearance: none; font-family: -apple-system, sans-serif;
+}
+.einsatz-field input:focus, .einsatz-field textarea:focus {
+  outline: none; border-color: #1a9e5a; background: #fff;
+}
+.einsatz-field textarea {
+  resize: none; height: 60px; line-height: 1.4;
+}
+
 .footer {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: #fff; border-top: 1px solid #e0e0e0;
@@ -119,6 +152,38 @@ body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a
     </div>
   </div>
   <input type="search" id="search" placeholder="Name oder Nummer suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+</div>
+
+<div class="einsatz">
+  <div class="einsatz-title">Einsatz / Übung</div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="datum">Datum</label>
+      <input type="date" id="datum" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="von">Von</label>
+      <input type="time" id="von" oninput="saveEinsatz()">
+    </div>
+    <div class="einsatz-field">
+      <label for="bis">Bis</label>
+      <input type="time" id="bis" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="ort">Ort</label>
+      <input type="text" id="ort" placeholder="z.B. Gerätehaus" autocorrect="off" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="notizen">Notizen</label>
+      <textarea id="notizen" placeholder="Bemerkungen..." oninput="saveEinsatz()"></textarea>
+    </div>
+  </div>
 </div>
 
 <div class="list" id="list"></div>
@@ -215,7 +280,40 @@ var members = [
 members.sort(function(a,b){ return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
 
 var present = {};
+try {
+  var saved = localStorage.getItem('ff_anwesenheit');
+  if (saved) present = JSON.parse(saved);
+} catch(e) {}
+
 var filtered = members.slice();
+
+function saveState() {
+  try { localStorage.setItem('ff_anwesenheit', JSON.stringify(present)); } catch(e) {}
+}
+
+function saveEinsatz() {
+  var e = {
+    datum: document.getElementById('datum').value,
+    von: document.getElementById('von').value,
+    bis: document.getElementById('bis').value,
+    ort: document.getElementById('ort').value,
+    notizen: document.getElementById('notizen').value
+  };
+  try { localStorage.setItem('ff_einsatz', JSON.stringify(e)); } catch(e) {}
+}
+
+function loadEinsatz() {
+  try {
+    var saved = localStorage.getItem('ff_einsatz');
+    if (!saved) return;
+    var e = JSON.parse(saved);
+    if (e.datum) document.getElementById('datum').value = e.datum;
+    if (e.von) document.getElementById('von').value = e.von;
+    if (e.bis) document.getElementById('bis').value = e.bis;
+    if (e.ort) document.getElementById('ort').value = e.ort;
+    if (e.notizen) document.getElementById('notizen').value = e.notizen;
+  } catch(e) {}
+}
 
 function render() {
   var list = document.getElementById('list');
@@ -243,6 +341,7 @@ function render() {
 
 function toggle(key) {
   if (present[key]) { delete present[key]; } else { present[key] = true; }
+  saveState();
   render();
   document.getElementById('export-btn').disabled = Object.keys(present).length === 0;
   document.getElementById('output-box').style.display = 'none';
@@ -254,7 +353,18 @@ function exportNummern() {
   for (var i = 0; i < members.length; i++) {
     if (present[String(members[i].nr)]) nrs.push(members[i].nr);
   }
-  var text = nrs.join(', ');
+  var datum = document.getElementById('datum').value;
+  var von = document.getElementById('von').value;
+  var bis = document.getElementById('bis').value;
+  var ort = document.getElementById('ort').value;
+  var notizen = document.getElementById('notizen').value;
+  var lines = [];
+  if (datum) lines.push('Datum: ' + datum);
+  if (von || bis) lines.push('Zeit: ' + (von || '–') + ' – ' + (bis || '–'));
+  if (ort) lines.push('Ort: ' + ort);
+  if (notizen) lines.push('Notizen: ' + notizen);
+  lines.push('Anwesend (' + nrs.length + '): ' + nrs.join(', '));
+  var text = lines.join('\n');
   var box = document.getElementById('output-box');
   box.textContent = text;
   box.style.display = 'block';
@@ -286,7 +396,13 @@ function copyOutput() {
 
 function resetAll() {
   present = {};
-  document.getElementById('search').value = '';
+  saveState();
+  document.getElementById('datum').value = '';
+  document.getElementById('von').value = '';
+  document.getElementById('bis').value = '';
+  document.getElementById('ort').value = '';
+  document.getElementById('notizen').value = '';
+  try { localStorage.removeItem('ff_einsatz'); } catch(e) {}  document.getElementById('search').value = '';
   filtered = members.slice();
   document.getElementById('output-box').style.display = 'none';
   document.getElementById('copy-hint').style.display = 'none';
@@ -309,6 +425,7 @@ document.getElementById('search').addEventListener('input', function(e) {
 });
 
 render();
+loadEinsatz();
 </script>
 </body>
 </html>
