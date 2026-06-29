@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FlorianiCheck Gaimberg</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a1a; }
+
+.header {
+  position: sticky; top: 0; z-index: 10;
+  background: #f0f0f0;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #dcdcdc;
+}
+.app-title {
+  font-size: 17px; font-weight: 700; color: #a82323;
+  text-align: center; margin-bottom: 10px; letter-spacing: 0.01em;
+}
+.app-title span { color: #555; font-weight: 600; }
+.stats {
+  display: flex; gap: 8px; margin-bottom: 10px;
+}
+.stat {
+  flex: 1; background: #e0e0e0; border-radius: 10px;
+  padding: 8px 10px; text-align: center;
+}
+.stat-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+.stat-num.red { color: #d32f2f; }
+.stat-label { font-size: 11px; color: #666; margin-top: 1px; }
+
+#search {
+  width: 100%; padding: 9px 14px;
+  border: 1px solid #ccc; border-radius: 10px;
+  font-size: 16px; background: #fafafa; color: #1a1a1a;
+  -webkit-appearance: none;
+}
+#search:focus { outline: none; border-color: #d32f2f; background: #fff; }
+
+.list { padding-bottom: 160px; }
+
+.person {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+.person:active { background: #e8e8e8; }
+.person.anwesend { background: #fdf2f2; }
+.person.anwesend:active { background: #f9d5d5; }
+
+.check {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid #bbb;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.person.anwesend .check {
+  background: #d32f2f; border-color: #d32f2f;
+}
+.check svg { display: none; }
+.person.anwesend .check svg { display: block; }
+
+.info { flex: 1; min-width: 0; }
+.name { font-size: 15px; color: #222; }
+.person.anwesend .name { font-weight: 600; color: #a82323; }
+
+.nr {
+  font-size: 13px; color: #777;
+  background: #e8e8e8; border-radius: 6px;
+  padding: 2px 8px; flex-shrink: 0;
+}
+.person.anwesend .nr {
+  background: #f9d5d5; color: #a82323;
+}
+
+.no-results { padding: 2rem; text-align: center; color: #777; font-size: 14px; }
+
+.einsatz {
+  background: #f5f5f5;
+  border-bottom: 1px solid #dcdcdc;
+  padding: 12px 16px;
+  transition: max-height 0.25s ease-out, opacity 0.25s ease-out, padding 0.25s ease-out;
+  max-height: 500px; opacity: 1; overflow: hidden;
+}
+.einsatz.hidden {
+  max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; border-bottom: none;
+}
+.einsatz-title {
+  font-size: 11px; font-weight: 600; color: #666;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.einsatz-row {
+  display: flex; gap: 8px; margin-bottom: 8px;
+}
+.einsatz-row:last-child { margin-bottom: 0; }
+.einsatz-field {
+  display: flex; flex-direction: column; flex: 1;
+}
+.einsatz-field label {
+  font-size: 11px; color: #666; margin-bottom: 3px;
+}
+.einsatz-field input, .einsatz-field textarea, .einsatz-field select {
+  padding: 8px 10px;
+  border: 1px solid #ccc; border-radius: 8px;
+  font-size: 15px; background: #fafafa; color: #1a1a1a;
+  -webkit-appearance: none; font-family: -apple-system, sans-serif;
+}
+.einsatz-field input:focus, .einsatz-field textarea:focus, .einsatz-field select:focus {
+  outline: none; border-color: #d32f2f; background: #fff;
+}
+.einsatz-field textarea {
+  resize: none; height: 60px; line-height: 1.4;
+}
+
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #f0f0f0; border-top: 1px solid #dcdcdc;
+  padding: 10px 16px 20px;
+}
+.output-box {
+  background: #e8e8e8; border: 1px solid #ccc; border-radius: 10px;
+  padding: 10px 12px; font-family: monospace; font-size: 13px;
+  color: #1a1a1a; word-break: break-all;
+  margin-bottom: 8px; display: none; cursor: pointer;
+}
+.copy-hint { font-size: 11px; color: #666; margin-bottom: 6px; display: none; }
+.export-row { display: flex; gap: 8px; }
+.export-btn {
+  flex: 1; padding: 13px;
+  background: #d32f2f; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+  -webkit-appearance: none;
+}
+.export-btn:active { background: #a82323; }
+.export-btn:disabled { background: #ccc; color: #fff; }
+.export-btn.pdf { background: #455a64; }
+.export-btn.pdf:active { background: #2e3d44; }
+.export-btn.pdf:disabled { background: #ccc; }
+.reset-btn {
+  width: 100%; padding: 9px; margin-top: 6px;
+  background: none; border: 1px solid #ccc; border-radius: 10px;
+  font-size: 13px; color: #666; cursor: pointer;
+  -webkit-appearance: none;
+}
+.reset-btn:active { background: #e0e0e0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="app-title">FlorianiCheck <span>Gaimberg</span></div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="total-count">0</div>
+      <div class="stat-label">Mitglieder</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num red" id="present-count">0</div>
+      <div class="stat-label">Anwesend</div>
+    </div>
+  </div>
+  <input type="search" id="search" placeholder="Name oder Nummer suchen..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+</div>
+
+<div class="einsatz" id="einsatz-form">
+  <div class="einsatz-title">Einsatz / Übung</div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="art">Art</label>
+      <select id="art" oninput="saveEinsatz()">
+        <option value="">– bitte wählen –</option>
+        <option>Gruppenübung</option>
+        <option>Hauptübung</option>
+        <option>Ausschusssitzung</option>
+        <option>Gemeinschaftsübung</option>
+        <option>JHV</option>
+        <option>Einsatz</option>
+        <option>Arbeitseinsatz</option>
+        <option>Schulung</option>
+        <option>Florianifeier</option>
+        <option>Kirchgang</option>
+        <option>Kommandobe­sprechung</option>
+        <option>Sonst. Tätigkeiten</option>
+      </select>
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="datum">Datum</label>
+      <input type="date" id="datum" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="von">Von</label>
+      <input type="time" id="von" oninput="saveEinsatz()">
+    </div>
+    <div class="einsatz-field">
+      <label for="bis">Bis</label>
+      <input type="time" id="bis" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="ort">Ort</label>
+      <input type="text" id="ort" placeholder="z.B. Gerätehaus" autocorrect="off" oninput="saveEinsatz()">
+    </div>
+  </div>
+  <div class="einsatz-row">
+    <div class="einsatz-field">
+      <label for="notizen">Notizen</label>
+      <textarea id="notizen" placeholder="Bemerkungen..." oninput="saveEinsatz()"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="list" id="list"></div>
+
+<div class="footer">
+  <div class="output-box" id="output-box" onclick="copyOutput()"></div>
+  <div class="copy-hint" id="copy-hint">Antippen zum Kopieren</div>
+  <div class="export-row">
+    <button class="export-btn" id="export-btn" onclick="exportNummern()" disabled>Als Text teilen</button>
+    <button class="export-btn pdf" id="pdf-btn" onclick="exportPdf()" disabled>Als PDF teilen</button>
+  </div>
+  <button class="reset-btn" onclick="resetAll()">Auswahl zurücksetzen</button>
+</div>
+
+<script>
+var members = [
+  {nr:200,vorname:"Norbert",nachname:"Amraser"},
+  {nr:257,vorname:"Christina",nachname:"Amraser"},
+  {nr:201,vorname:"Florian",nachname:"Baumgartner"},
+  {nr:202,vorname:"Peter",nachname:"Bergmann"},
+  {nr:290,vorname:"Herbert",nachname:"Boden"},
+  {nr:266,vorname:"Andreas",nachname:"Duregger"},
+  {nr:203,vorname:"Markus",nachname:"Duregger"},
+  {nr:296,vorname:"Michael",nachname:"Duregger"},
+  {nr:204,vorname:"Norbert",nachname:"Duregger"},
+  {nr:205,vorname:"Johann",nachname:"Frank"},
+  {nr:301,vorname:"Emanuel",nachname:"Gasser"},
+  {nr:206,vorname:"Josef",nachname:"Girstmair"},
+  {nr:274,vorname:"Kurt",nachname:"Gomig"},
+  {nr:305,vorname:"Gabriel",nachname:"Gradnig"},
+  {nr:207,vorname:"Josef",nachname:"Groder"},
+  {nr:300,vorname:"Nelly",nachname:"Hartinger"},
+  {nr:285,vorname:"Florian",nachname:"Huber"},
+  {nr:306,vorname:"Jonas",nachname:"Huber"},
+  {nr:210,vorname:"Johann",nachname:"Idl"},
+  {nr:211,vorname:"Josef",nachname:"Idl"},
+  {nr:212,vorname:"Klaus",nachname:"Idl"},
+  {nr:272,vorname:"Simon",nachname:"Idl"},
+  {nr:295,vorname:"Samuel",nachname:"Jeller"},
+  {nr:215,vorname:"Konrad",nachname:"Klaunzer"},
+  {nr:268,vorname:"Clemens",nachname:"Kollnig"},
+  {nr:245,vorname:"Franz sen.",nachname:"Kollnig"},
+  {nr:218,vorname:"Franz",nachname:"Kollnig"},
+  {nr:270,vorname:"Gerhard",nachname:"Kollnig"},
+  {nr:219,vorname:"Josef",nachname:"Kollnig"},
+  {nr:262,vorname:"Raimund",nachname:"Kollnig"},
+  {nr:199,vorname:"Gernot",nachname:"Ladner"},
+  {nr:293,vorname:"Stefan",nachname:"Mariner"},
+  {nr:269,vorname:"Marco",nachname:"Mayr"},
+  {nr:281,vorname:"Gerd",nachname:"Mitterdorfer"},
+  {nr:297,vorname:"Leo",nachname:"Monz-Bodner"},
+  {nr:277,vorname:"Alexander",nachname:"Neumair"},
+  {nr:221,vorname:"Alois",nachname:"Neumair"},
+  {nr:260,vorname:"Andre",nachname:"Neumair"},
+  {nr:222,vorname:"Josef",nachname:"Neumair"},
+  {nr:223,vorname:"Marko",nachname:"Neumair"},
+  {nr:225,vorname:"Martin",nachname:"Niedertscheider"},
+  {nr:298,vorname:"Julian",nachname:"Obererlacher"},
+  {nr:227,vorname:"Herbert",nachname:"Presslaber"},
+  {nr:267,vorname:"Lukas",nachname:"Presslaber"},
+  {nr:253,vorname:"Josef sen.",nachname:"Ranacher"},
+  {nr:307,vorname:"Josef",nachname:"Ranacher"},
+  {nr:299,vorname:"Peter",nachname:"Rieslegger"},
+  {nr:229,vorname:"Hermann",nachname:"Rossi"},
+  {nr:230,vorname:"Daniel",nachname:"Steiner"},
+  {nr:261,vorname:"Gerald",nachname:"Steiner"},
+  {nr:231,vorname:"Johannes",nachname:"Steiner"},
+  {nr:304,vorname:"Klemens",nachname:"Steiner"},
+  {nr:303,vorname:"Matthias",nachname:"Steiner"},
+  {nr:232,vorname:"Paul",nachname:"Steiner"},
+  {nr:233,vorname:"Michael",nachname:"Theurl"},
+  {nr:234,vorname:"Walter",nachname:"Theurl"},
+  {nr:302,vorname:"Fabian",nachname:"Tiefnig"},
+  {nr:235,vorname:"Josef",nachname:"Tiefnig"},
+  {nr:287,vorname:"Klaus",nachname:"Tiefnig"},
+  {nr:280,vorname:"Lukas",nachname:"Tiefnig"},
+  {nr:236,vorname:"Michael",nachname:"Tiefnig"},
+  {nr:275,vorname:"Daniel",nachname:"Trojer"},
+  {nr:294,vorname:"Andreas",nachname:"Tscharnig"},
+  {nr:238,vorname:"Engelbert",nachname:"Tscharnig"},
+  {nr:282,vorname:"Johannes",nachname:"Tscharnig"},
+  {nr:265,vorname:"Markus",nachname:"Tscharnig"},
+  {nr:284,vorname:"Dominic",nachname:"Vallazza"},
+  {nr:241,vorname:"Ludwig",nachname:"Vallazza"},
+  {nr:308,vorname:"Niklas",nachname:"Wallensteiner"},
+  {nr:283,vorname:"Martin",nachname:"Waschnig"},
+  {nr:243,vorname:"Bernhard",nachname:"Webhofer"},
+  {nr:288,vorname:"Fabian",nachname:"Webhofer"},
+  {nr:264,vorname:"Friedrich",nachname:"Webhofer"},
+  {nr:244,vorname:"Hermann",nachname:"Webhofer"},
+  {nr:276,vorname:"Michael",nachname:"Webhofer"},
+  {nr:278,vorname:"Stefan",nachname:"Webhofer"},
+  {nr:292,vorname:"Jurgen",nachname:"Weiler"},
+  {nr:289,vorname:"Bernd",nachname:"Wimmer"}
+];
+
+members.sort(function(a,b){
+  if (a.nachname < b.nachname) return -1;
+  if (a.nachname > b.nachname) return 1;
+  if (a.vorname < b.vorname) return -1;
+  if (a.vorname > b.vorname) return 1;
+  return 0;
+});
+
+for (var i = 0; i < members.length; i++) {
+  members[i]._searchKey = (members[i].nachname + ' ' + members[i].vorname + ' ' + members[i].nr).toLowerCase();
+}
+
+var present = {};
+try {
+  var saved = localStorage.getItem('ff_anwesenheit');
+  if (saved) present = JSON.parse(saved);
+} catch(e) {}
+
+function saveState() {
+  try { localStorage.setItem('ff_anwesenheit', JSON.stringify(present)); } catch(e) {}
+}
+
+function saveEinsatz() {
+  var e = {
+    art: document.getElementById('art').value,
+    datum: document.getElementById('datum').value,
+    von: document.getElementById('von').value,
+    bis: document.getElementById('bis').value,
+    ort: document.getElementById('ort').value,
+    notizen: document.getElementById('notizen').value
+  };
+  try { localStorage.setItem('ff_einsatz', JSON.stringify(e)); } catch(e) {}
+}
+
+function loadEinsatz() {
+  try {
+    var saved = localStorage.getItem('ff_einsatz');
+    if (!saved) return;
+    var e = JSON.parse(saved);
+    if (e.art) document.getElementById('art').value = e.art;
+    if (e.datum) document.getElementById('datum').value = e.datum;
+    if (e.von) document.getElementById('von').value = e.von;
+    if (e.bis) document.getElementById('bis').value = e.bis;
+    if (e.ort) document.getElementById('ort').value = e.ort;
+    if (e.notizen) document.getElementById('notizen').value = e.notizen;
+  } catch(e) {}
+}
+
+function initialRender() {
+  var list = document.getElementById('list');
+  var html = '';
+  for (var i = 0; i < members.length; i++) {
+    var m = members[i];
+    var key = String(m.nr);
+    var isP = present[key] === true;
+    html += '<div class="person' + (isP ? ' anwesend' : '') + '" id="p-' + key + '" onclick="toggle(\'' + key + '\')">';
+    html += '<div class="check">';
+    html += '<svg width="14" height="11" viewBox="0 0 14 11" fill="none"><polyline points="1,5.5 5,9.5 13,1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    html += '</div>';
+    html += '<div class="info"><div class="name">' + m.nachname + ' ' + m.vorname + '</div></div>';
+    html += '<div class="nr">' + m.nr + '</div>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('total-count').textContent = members.length;
+  var countPresent = Object.keys(present).length;
+  document.getElementById('present-count').textContent = countPresent;
+  document.getElementById('export-btn').disabled = countPresent === 0;
+  document.getElementById('pdf-btn').disabled = countPresent === 0;
+}
+
+function toggle(key) {
+  var el = document.getElementById('p-' + key);
+  if (present[key]) {
+    delete present[key];
+    if (el) el.classList.remove('anwesend');
+  } else {
+    present[key] = true;
+    if (el) el.classList.add('anwesend');
+  }
+  
+  // 1. Suchfeld leeren
+  var searchInput = document.getElementById('search');
+  searchInput.value = '';
+  
+  // 2. Alle Personen wieder einblenden (da die Suche zurückgesetzt wurde)
+  for (var i = 0; i < members.length; i++) {
+    var pEl = document.getElementById('p-' + members[i].nr);
+    if (pEl) pEl.style.display = '';
+  }
+  
+  // 3. Einsatz-Formular wieder einblenden
+  document.getElementById('einsatz-form').classList.remove('hidden');
+  
+  // 4. DIREKT WIEDER IN DIE SUCHE SPRINGEN & Tastatur offen halten
+  searchInput.focus();
+  
+  saveState();
+  updateStats();
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('copy-hint').style.display = 'none';
+}
+
+function getEinsatzData() {
+  var presentMembers = [];
+  var nrs = [];
+  for (var i = 0; i < members.length; i++) {
+    if (present[String(members[i].nr)]) {
+      presentMembers.push(members[i]);
+      nrs.push(members[i].nr);
+    }
+  }
+  return {
+    art: document.getElementById('art').value,
+    datum: document.getElementById('datum').value,
+    von: document.getElementById('von').value,
+    bis: document.getElementById('bis').value,
+    ort: document.getElementById('ort').value,
+    notizen: document.getElementById('notizen').value,
+    nrs: nrs,
+    presentMembers: presentMembers
+  };
+}
+
+function exportNummern() {
+  var d = getEinsatzData();
+  var lines = [];
+  if (d.art) lines.push('Art: ' + d.art);
+  if (d.datum) lines.push('Datum: ' + d.datum);
+  if (d.von || d.bis) lines.push('Zeit: ' + (d.von || '–') + ' – ' + (d.bis || '–'));
+  if (d.ort) lines.push('Ort: ' + d.ort);
+  if (d.notizen) lines.push('Notizen: ' + d.notizen);
+  lines.push('Anwesend (' + d.nrs.length + '): ' + d.nrs.join(', '));
+  var text = lines.join('\n');
+
+  if (navigator.share) {
+    navigator.share({
+      title: d.art || 'FlorianiCheck Gaimberg',
+      text: text
+    }).catch(function(err) {
+      showFallbackBox(text);
+    });
+  } else {
+    showFallbackBox(text);
+  }
+}
+
+function exportPdf() {
+  var d = getEinsatzData();
+  // Überschrift in denselben Farben wie im App-Header (rot / grau).
+  var headingParts = [
+    { text: 'FlorianiCheck', color: [0.659, 0.137, 0.137] },
+    { text: ' Gaimberg', color: [0.333, 0.333, 0.333] }
+  ];
+
+  var lines = [];
+  if (d.art) lines.push('Art: ' + d.art);
+  if (d.datum) lines.push('Datum: ' + d.datum);
+  if (d.von || d.bis) lines.push('Zeit: ' + (d.von || '–') + ' – ' + (d.bis || '–'));
+  if (d.ort) lines.push('Ort: ' + d.ort);
+  if (d.notizen) lines.push('Notizen: ' + d.notizen);
+  if (lines.length) lines.push('');
+  lines.push('Anwesend (' + d.presentMembers.length + '):');
+  lines.push('');
+  for (var i = 0; i < d.presentMembers.length; i++) {
+    var m = d.presentMembers[i];
+    lines.push(padRight(String(m.nr), 6) + m.nachname + ' ' + m.vorname);
+  }
+
+  var blob = buildPdf(headingParts, lines);
+  var fname = 'Anwesenheit' + (d.datum ? '_' + d.datum : '') + '.pdf';
+  var file = null;
+  try { file = new File([blob], fname, { type: 'application/pdf' }); } catch(e) {}
+
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: d.art || 'FlorianiCheck Gaimberg' }).catch(function() {
+      downloadBlob(blob, fname);
+    });
+  } else {
+    downloadBlob(blob, fname);
+  }
+}
+
+function padRight(s, n) {
+  while (s.length < n) s += ' ';
+  return s;
+}
+
+function downloadBlob(blob, fname) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+// Minimaler PDF-Generator (Helvetica, WinAnsi) – keine externe Library nötig.
+function buildPdf(headingParts, lines) {
+  var pageW = 595, pageH = 842, margin = 50;
+  var leading = 15, fontSize = 11, headingSize = 16;
+  var bottom = margin;
+  var headingY = pageH - margin;
+  var bodyTopFirst = headingY - 28;
+  var bodyTopRest = pageH - margin;
+  var perFirst = Math.floor((bodyTopFirst - bottom) / leading) + 1;
+  var perRest = Math.floor((bodyTopRest - bottom) / leading) + 1;
+
+  // Unicode-Sonderzeichen auf ihre WinAnsi-Bytes abbilden (z.B. – „ " • …),
+  // damit aus jedem Zeichen genau 1 Byte wird.
+  var WINANSI = {
+    0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,
+    0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,
+    0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,
+    0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,
+    0x0153:0x9C,0x017E:0x9E,0x0178:0x9F
+  };
+  function toWinAnsi(s) {
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c <= 0xFF) out += String.fromCharCode(c);
+      else if (WINANSI[c] !== undefined) out += String.fromCharCode(WINANSI[c]);
+      else out += '?';
+    }
+    return out;
+  }
+  function esc(s) {
+    return toWinAnsi(String(s)).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  }
+
+  // Helvetica-Zeichenbreiten (1/1000 em) für mittiges Setzen.
+  var HW = {
+    32:278,33:278,34:355,35:556,36:556,37:889,38:667,39:191,40:333,41:333,
+    42:389,43:584,44:278,45:333,46:278,47:278,48:556,49:556,50:556,51:556,
+    52:556,53:556,54:556,55:556,56:556,57:556,58:278,59:278,60:584,61:584,
+    62:584,63:556,64:1015,65:667,66:667,67:722,68:722,69:667,70:611,71:778,
+    72:722,73:278,74:500,75:667,76:556,77:833,78:722,79:778,80:667,81:778,
+    82:722,83:667,84:611,85:722,86:667,87:944,88:667,89:667,90:611,91:278,
+    92:278,93:278,94:469,95:556,96:333,97:556,98:556,99:500,100:556,101:556,
+    102:278,103:556,104:556,105:222,106:222,107:500,108:222,109:833,110:556,
+    111:556,112:556,113:556,114:333,115:500,116:278,117:556,118:500,119:722,
+    120:500,121:500,122:500,123:334,124:260,125:334,126:584,
+    0x95:350,0x96:556,0x97:1000,0xB7:278,
+    0xC4:667,0xD6:778,0xDC:722,0xDF:556,0xE4:556,0xF6:556,0xFC:556
+  };
+  function textWidth(s, size) {
+    var t = toWinAnsi(String(s)), w = 0;
+    for (var i = 0; i < t.length; i++) {
+      var ww = HW[t.charCodeAt(i)];
+      w += (ww === undefined ? 556 : ww);
+    }
+    return w / 1000 * size;
+  }
+
+  // Zeilen auf Seiten aufteilen
+  var chunks = [];
+  var idx = 0;
+  if (lines.length === 0) {
+    chunks.push([]);
+  } else {
+    chunks.push(lines.slice(0, perFirst));
+    idx = perFirst;
+    while (idx < lines.length) {
+      chunks.push(lines.slice(idx, idx + perRest));
+      idx += perRest;
+    }
+  }
+
+  function pageContent(chunk, withTitle, bodyTop) {
+    var c = '';
+    if (withTitle) {
+      var totalW = 0;
+      for (var h = 0; h < headingParts.length; h++) totalW += textWidth(headingParts[h].text, headingSize);
+      var hx = (pageW - totalW) / 2;
+      for (var h = 0; h < headingParts.length; h++) {
+        var part = headingParts[h];
+        var col = part.color;
+        c += 'BT /F1 ' + headingSize + ' Tf ' + col[0] + ' ' + col[1] + ' ' + col[2] + ' rg 1 0 0 1 ' + hx.toFixed(2) + ' ' + headingY + ' Tm (' + esc(part.text) + ') Tj ET\n';
+        hx += textWidth(part.text, headingSize);
+      }
+    }
+    c += 'BT /F1 ' + fontSize + ' Tf 0 0 0 rg 1 0 0 1 ' + margin + ' ' + bodyTop + ' Tm\n';
+    for (var i = 0; i < chunk.length; i++) {
+      if (i > 0) c += '0 -' + leading + ' Td\n';
+      c += '(' + esc(chunk[i]) + ') Tj\n';
+    }
+    c += 'ET';
+    return c;
+  }
+
+  var numPages = chunks.length;
+  var objects = [];
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  var kids = [];
+  for (var p = 0; p < numPages; p++) kids.push((4 + p * 2) + ' 0 R');
+  objects[2] = '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + numPages + ' >>';
+  objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+  for (var p = 0; p < numPages; p++) {
+    var pageNum = 4 + p * 2;
+    var contentNum = pageNum + 1;
+    objects[pageNum] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageW + ' ' + pageH + '] /Resources << /Font << /F1 3 0 R >> >> /Contents ' + contentNum + ' 0 R >>';
+    var content = pageContent(chunks[p], p === 0, p === 0 ? bodyTopFirst : bodyTopRest);
+    objects[contentNum] = '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream';
+  }
+
+  var maxObj = 3 + numPages * 2;
+  var body = '%PDF-1.4\n';
+  var offsets = [];
+  for (var n = 1; n <= maxObj; n++) {
+    offsets[n] = body.length;
+    body += n + ' 0 obj\n' + objects[n] + '\nendobj\n';
+  }
+  var xrefStart = body.length;
+  var xref = 'xref\n0 ' + (maxObj + 1) + '\n0000000000 65535 f \n';
+  for (var n = 1; n <= maxObj; n++) {
+    var o = String(offsets[n]);
+    while (o.length < 10) o = '0' + o;
+    xref += o + ' 00000 n \n';
+  }
+  var pdfStr = body + xref + 'trailer\n<< /Size ' + (maxObj + 1) + ' /Root 1 0 R >>\nstartxref\n' + xrefStart + '\n%%EOF';
+
+  var bytes = new Uint8Array(pdfStr.length);
+  for (var i = 0; i < pdfStr.length; i++) bytes[i] = pdfStr.charCodeAt(i) & 0xff;
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+function showFallbackBox(text) {
+  var box = document.getElementById('output-box');
+  box.textContent = text;
+  box.style.display = 'block';
+  document.getElementById('copy-hint').style.display = 'block';
+}
+
+function copyOutput() {
+  var text = document.getElementById('output-box').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      var box = document.getElementById('output-box');
+      var orig = box.textContent;
+      box.textContent = 'Kopiert!';
+      setTimeout(function(){ box.textContent = orig; }, 1500);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var box = document.getElementById('output-box');
+    var orig = box.textContent;
+    box.textContent = 'Kopiert!';
+    setTimeout(function(){ box.textContent = orig; }, 1500);
+  }
+}
+
+function resetAll() {
+  if (!confirm('Auswahl wirklich zurücksetzen?')) return;
+  present = {};
+  saveState();
+  document.getElementById('art').value = '';
+  document.getElementById('datum').value = '';
+  document.getElementById('von').value = '';
+  document.getElementById('bis').value = '';
+  document.getElementById('ort').value = '';
+  document.getElementById('notizen').value = '';
+  try { localStorage.removeItem('ff_einsatz'); } catch(e) {}
+  document.getElementById('search').value = '';
+  
+  for (var i = 0; i < members.length; i++) {
+    var el = document.getElementById('p-' + members[i].nr);
+    if (el) {
+      el.style.display = '';
+      el.classList.remove('anwesend');
+    }
+  }
+  
+  document.getElementById('einsatz-form').classList.remove('hidden');
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('copy-hint').style.display = 'none';
+  updateStats();
+}
+
+// Suche Event-Listeners mit automatischem Ein-/Ausblenden des Formulars
+var searchInput = document.getElementById('search');
+var einsatzForm = document.getElementById('einsatz-form');
+
+searchInput.addEventListener('input', function(e) {
+  var q = e.target.value.toLowerCase();
+  for (var i = 0; i < members.length; i++) {
+    var el = document.getElementById('p-' + members[i].nr);
+    if (!el) continue;
+    if (members[i]._searchKey.indexOf(q) !== -1) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+});
+
+searchInput.addEventListener('focus', function() {
+  einsatzForm.classList.add('hidden');
+});
+
+searchInput.addEventListener('blur', function() {
+  // Nur wieder einblenden, wenn das Suchfeld leer ist
+  if (searchInput.value === '') {
+    einsatzForm.classList.remove('hidden');
+  }
+});
+
+initialRender();
+loadEinsatz();
+</script>
+</body>
+</html>
