@@ -12,7 +12,7 @@
 <!-- Homescreen-Icon / PWA (Android) – Manifest direkt eingebettet, keine Extra-Datei -->
 <link rel="icon" href="apple-touch-icon.png">
 <link rel="manifest" href='data:application/manifest+json,{"name":"FlorianiCheck%20Gaimberg","short_name":"FlorianiCheck","display":"standalone","background_color":"%23f0f0f0","theme_color":"%23d32f2f","icons":[{"src":"apple-touch-icon.png","sizes":"180x180","type":"image/png"}]}'>
-<meta name="theme-color" content="#d32f2f">
+<meta name="theme-color" content="#A52019">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a1a; }
@@ -24,7 +24,7 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   border-bottom: 1px solid #dcdcdc;
 }
 .app-title {
-  font-size: 17px; font-weight: 700; color: #a82323;
+  font-size: 17px; font-weight: 700; color: #A52019;
   text-align: center; margin-bottom: 10px; letter-spacing: 0.01em;
 }
 .app-title span { color: #555; font-weight: 600; }
@@ -36,7 +36,7 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   padding: 8px 10px; text-align: center;
 }
 .stat-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
-.stat-num.red { color: #d32f2f; }
+.stat-num.red { color: #A52019; }
 .stat-label { font-size: 11px; color: #666; margin-top: 1px; }
 
 #search {
@@ -45,7 +45,7 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   font-size: 16px; background: #fafafa; color: #1a1a1a;
   -webkit-appearance: none;
 }
-#search:focus { outline: none; border-color: #d32f2f; background: #fff; }
+#search:focus { outline: none; border-color: #A52019; background: #fff; }
 
 .list { padding-bottom: 160px; }
 
@@ -69,14 +69,14 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   transition: background 0.15s, border-color 0.15s;
 }
 .person.anwesend .check {
-  background: #d32f2f; border-color: #d32f2f;
+  background: #A52019; border-color: #A52019;
 }
 .check svg { display: none; }
 .person.anwesend .check svg { display: block; }
 
 .info { flex: 1; min-width: 0; }
 .name { font-size: 15px; color: #222; }
-.person.anwesend .name { font-weight: 600; color: #a82323; }
+.person.anwesend .name { font-weight: 600; color: #A52019; }
 
 .nr {
   font-size: 13px; color: #777;
@@ -84,7 +84,7 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   padding: 2px 8px; flex-shrink: 0;
 }
 .person.anwesend .nr {
-  background: #f9d5d5; color: #a82323;
+  background: #f9d5d5; color: #A52019;
 }
 
 .no-results { padding: 2rem; text-align: center; color: #777; font-size: 14px; }
@@ -121,7 +121,7 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
   -webkit-appearance: none; font-family: -apple-system, sans-serif;
 }
 .einsatz-field input:focus, .einsatz-field textarea:focus, .einsatz-field select:focus {
-  outline: none; border-color: #d32f2f; background: #fff;
+  outline: none; border-color: #A52019; background: #fff;
 }
 .einsatz-field textarea {
   resize: none; height: 60px; line-height: 1.4;
@@ -142,12 +142,12 @@ body { font-family: -apple-system, sans-serif; background: #e8e8e8; color: #1a1a
 .export-row { display: flex; gap: 8px; }
 .export-btn {
   flex: 1; padding: 13px;
-  background: #d32f2f; color: #fff;
+  background: #A52019; color: #fff;
   border: none; border-radius: 12px;
   font-size: 16px; font-weight: 600; cursor: pointer;
   -webkit-appearance: none;
 }
-.export-btn:active { background: #a82323; }
+.export-btn:active { background: #7E1813; }
 .export-btn:disabled { background: #ccc; color: #fff; }
 .reset-btn {
   width: 100%; padding: 9px; margin-top: 6px;
@@ -476,7 +476,7 @@ function exportPdf() {
   var d = getEinsatzData();
   // Überschrift in denselben Farben wie im App-Header (rot / grau).
   var headingParts = [
-    { text: 'FlorianiCheck', color: [0.659, 0.137, 0.137] },
+    { text: 'FlorianiCheck', color: [0.647, 0.125, 0.098] },
     { text: ' Gaimberg', color: [0.333, 0.333, 0.333] }
   ];
 
@@ -581,6 +581,47 @@ function buildPdf(headingParts, lines) {
     }
     return w / 1000 * size;
   }
+
+  // Lange Zeilen auf die Seitenbreite umbrechen (Wortumbruch).
+  var maxWidth = pageW - margin * 2;
+  function wrap(text) {
+    if (text === '' || textWidth(text, fontSize) <= maxWidth) return [text];
+    var words = String(text).split(' ');
+    var out = [], cur = '';
+    for (var i = 0; i < words.length; i++) {
+      var word = words[i];
+      var test = cur === '' ? word : cur + ' ' + word;
+      if (textWidth(test, fontSize) <= maxWidth) {
+        cur = test;
+        continue;
+      }
+      if (cur !== '') { out.push(cur); cur = ''; }
+      if (textWidth(word, fontSize) > maxWidth) {
+        // Einzelwort breiter als die Seite -> hart nach Zeichen umbrechen
+        var chunk = '';
+        for (var j = 0; j < word.length; j++) {
+          var t2 = chunk + word.charAt(j);
+          if (chunk !== '' && textWidth(t2, fontSize) > maxWidth) {
+            out.push(chunk);
+            chunk = word.charAt(j);
+          } else {
+            chunk = t2;
+          }
+        }
+        cur = chunk;
+      } else {
+        cur = word;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+  var wrapped = [];
+  for (var wi = 0; wi < lines.length; wi++) {
+    var parts = wrap(lines[wi]);
+    for (var wj = 0; wj < parts.length; wj++) wrapped.push(parts[wj]);
+  }
+  lines = wrapped;
 
   // Zeilen auf Seiten aufteilen
   var chunks = [];
